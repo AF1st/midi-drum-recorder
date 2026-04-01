@@ -1,11 +1,12 @@
 package com.af1st.mididrumrecorder.ui
 
-import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,29 +48,20 @@ fun DrumRecorderScreen(viewModel: DrumViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Recording timer
             RecordingTimer(
                 state = uiState.recordingState,
                 durationMs = uiState.recordingDurationMs
             )
-
-            // Pattern visualizer
             PatternVisualizer(
                 hits = uiState.hits,
                 durationMs = uiState.recordingDurationMs,
                 isRecording = uiState.recordingState == RecordingState.RECORDING
             )
-
-            // Stats
             HitStatsRow(hits = uiState.hits)
-
-            // Drum pads
             DrumPadsRow(
                 enabled = uiState.recordingState == RecordingState.RECORDING,
                 onHit = { viewModel.onDrumHit(it) }
             )
-
-            // Transport controls
             TransportControls(
                 state = uiState.recordingState,
                 hasHits = uiState.hits.isNotEmpty(),
@@ -78,8 +70,6 @@ fun DrumRecorderScreen(viewModel: DrumViewModel) {
                 onReset = { viewModel.resetRecording() },
                 onExport = { viewModel.exportMidi(context) }
             )
-
-            // Export message
             AnimatedVisibility(
                 visible = uiState.exportMessage != null,
                 enter = fadeIn(),
@@ -89,7 +79,6 @@ fun DrumRecorderScreen(viewModel: DrumViewModel) {
                     ExportMessageCard(message = msg)
                 }
             }
-
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
@@ -181,7 +170,7 @@ fun PatternVisualizer(
     durationMs: Long,
     isRecording: Boolean
 ) {
-    val displayDuration = maxOf(durationMs, if (isRecording) 5000L else 5000L)
+    val displayDuration = maxOf(durationMs, 5000L)
 
     Surface(
         modifier = Modifier
@@ -192,7 +181,6 @@ fun PatternVisualizer(
         tonalElevation = 2.dp
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Grid lines
             androidx.compose.foundation.Canvas(
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -200,12 +188,10 @@ fun PatternVisualizer(
                 val snareY = size.height * 0.65f
                 val lineColor = androidx.compose.ui.graphics.Color.Gray.copy(alpha = 0.3f)
 
-                // Horizontal lane lines
                 drawLine(lineColor, androidx.compose.ui.geometry.Offset(0f, kickY), androidx.compose.ui.geometry.Offset(size.width, kickY), strokeWidth = 1f)
                 drawLine(lineColor, androidx.compose.ui.geometry.Offset(0f, snareY), androidx.compose.ui.geometry.Offset(size.width, snareY), strokeWidth = 1f)
                 drawLine(lineColor, androidx.compose.ui.geometry.Offset(size.width * 0.5f, 0f), androidx.compose.ui.geometry.Offset(size.width * 0.5f, size.height), strokeWidth = 1f)
 
-                // Draw hits
                 hits.forEach { hit ->
                     val x = if (displayDuration > 0) (hit.timestampMs.toFloat() / displayDuration * size.width) else 0f
                     val y = if (hit.type == DrumType.KICK) kickY else snareY
@@ -216,8 +202,6 @@ fun PatternVisualizer(
                     drawCircle(hitColor, radius = 6f, center = androidx.compose.ui.geometry.Offset(x, y))
                 }
             }
-
-            // Labels
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -301,7 +285,7 @@ fun DrumPadButton(
     onClick: () -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
-    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
@@ -372,7 +356,9 @@ fun TransportControls(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.error
                         ),
-                        modifier = Modifier.height(52.dp).width(160.dp),
+                        modifier = Modifier
+                            .height(52.dp)
+                            .width(160.dp),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Icon(Icons.Filled.FiberManualRecord, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -386,7 +372,9 @@ fun TransportControls(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary
                         ),
-                        modifier = Modifier.height(52.dp).width(160.dp),
+                        modifier = Modifier
+                            .height(52.dp)
+                            .width(160.dp),
                         shape = RoundedCornerShape(14.dp)
                     ) {
                         Icon(Icons.Filled.Stop, contentDescription = null, modifier = Modifier.size(20.dp))
