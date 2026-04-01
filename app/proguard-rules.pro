@@ -1,0 +1,1 @@
+-keep class com.af1st.mididrumrecorder.** { *; }
